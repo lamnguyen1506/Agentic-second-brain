@@ -1,0 +1,27 @@
+Team Standup - February 5, 2024
+
+Attendees: Alice, Bob, Charlie
+
+Alice: Good morning everyone. Let's do a quick roundup. Bob, how's the authentication work going?
+
+Bob: I finished the JWT implementation yesterday. Now working on integrating it with the session-based auth fallback for older clients. Should be done by end of day.
+
+Charlie: Nice! I've been working on the dashboard redesign. The new charts component is ready, but I'm blocked on the API endpoint for fetching analytics data.
+
+Alice: Bob, can you help Charlie with that API endpoint after you finish the auth work?
+
+Bob: Sure, I can take a look tomorrow morning.
+
+Alice: Perfect. I'll be focusing on the documentation updates today. We have the external API docs review scheduled for next week.
+
+Charlie: One more thing - the performance tests showed some slowdown in the search feature. We might need to look into optimizing the vector queries.
+
+Alice: Good catch. Let's schedule a deep-dive session for that on Friday. I'll send out the invite.
+
+Action Items:
+- Bob: Complete auth integration by EOD
+- Bob: Help Charlie with analytics API tomorrow
+- Alice: Send invite for Friday performance session
+- Charlie: Document the performance test findings
+
+Next standup: Tomorrow 9 AM

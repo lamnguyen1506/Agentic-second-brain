@@ -1,17 +1,23 @@
-# Personal Knowledge Retriever - RAG System
+# Second Brain - Personal Knowledge System
 
-A single-agent RAG (Retrieval-Augmented Generation) application built with Pydantic AI that answers questions based on your personal knowledge base with cited sources.
+A single-agent RAG (Retrieval-Augmented Generation) system built with Pydantic AI that serves as your personal knowledge base. Features persistent memory, PII protection, OpenTelemetry observability, and evaluation-driven development.
 
-**What it does:** Retrieves relevant context from a vector database → Augments LLM prompts → Generates accurate answers with source citations.
+## Features
+
+- **RAG Retrieval**: Vector-based search using ChromaDB and sentence transformers
+- **Persistent Memory**: SQLite-backed storage for conversations, preferences, and facts
+- **PII Guardrails**: Automatic detection and redaction of sensitive information
+- **OTEL Observability**: Tracing, structured logging, and performance metrics
+- **Evaluation Suite**: Test cases for measuring RAG and memory effectiveness
 
 ---
 
-## 🚀 Quick Start (3 Steps)
+## Quick Start
 
 ```bash
-# 1. Install dependencies (super fast with uv!)
-curl -LsSf https://astral.sh/uv/install.sh | sh 
-uv sync                                          
+# 1. Install dependencies
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv sync
 
 # 2. Set up API key
 cp .env.example .env
@@ -21,29 +27,45 @@ cp .env.example .env
 uv run python main.py
 ```
 
-**Using traditional pip?** See [installation options](#installation-options) below.
-
 ---
 
-## 💬 Usage
+## Usage
+
+### CLI Commands
 
 ```bash
-# Run the application
+# Interactive chat (default)
 uv run python main.py
 
-# Test it works
-uv run python test_basic.py
+# Re-index knowledge base from data/ directory
+uv run python main.py --ingest
 
-# Re-index after changing knowledge base
-rm -rf chroma_db/ && uv run python main.py
+# Run evaluation suite
+uv run python main.py --eval
+
+# Clear all stored memories
+uv run python main.py --clear-memory
+
+# Run without memory system
+uv run python main.py --no-memory
 ```
+
+### Interactive Commands
+
+While in interactive mode:
+- `help` - Show example questions
+- `memory` - View recent stored memories
+- `metrics` - View performance metrics
+- `quit` or `exit` - Exit the application
 
 ### Example Questions
 
-Try these with the included sample knowledge base:
-- "What features are planned for Q1 2024?"
-- "What are the API rate limits?"
-- "Who is responsible for the Advanced Search feature?"
+```
+What features are planned for Q1 2024?
+What are the API rate limits?
+Who is responsible for the Advanced Search feature?
+What are the top customer requests?
+```
 
 ### Example Output
 
@@ -63,54 +85,155 @@ SOURCES:
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 Agentic-second-brain/
 ├── data/
-│   └── knowledge_base.md      # Your knowledge base content
+│   ├── knowledge_base.md      # Your knowledge content
+│   ├── transcripts/           # Meeting transcripts
+│   └── memory.db              # SQLite memory (auto-created)
 ├── src/
 │   ├── __init__.py
-│   ├── embeddings.py          # Embedding generation and text chunking
-│   ├── vector_store.py        # ChromaDB vector store management
+│   ├── agent.py               # RAG agent with all tools
+│   ├── embeddings.py          # Embedding model and text chunking
+│   ├── vector_store.py        # ChromaDB vector store
+│   ├── indexer.py             # Document indexing
 │   ├── retrieval_tool.py      # RAG retrieval functionality
-│   ├── models.py              # Pydantic models for structured outputs
-│   ├── agent.py               # Pydantic AI agent definition
-│   └── indexer.py             # Knowledge base indexing utilities
-├── main.py                    # Main entry point
-├── requirements.txt           # Python dependencies
-├── .env                       # Your API key (not in git)
-└── chroma_db/                 # Vector database storage (auto-created)
+│   ├── models.py              # Pydantic models
+│   ├── memory.py              # SQLite memory system
+│   ├── guardrails.py          # PII detection and redaction
+│   ├── observability.py       # OTEL tracing and logging
+│   └── evals.py               # Evaluation suite
+├── logs/
+│   └── app.log                # Structured JSON logs
+├── results/
+│   └── eval_results.json      # Evaluation results
+├── main.py                    # CLI entry point
+├── pyproject.toml
+└── README.md
 ```
 
 ---
 
-## Customization
+## Architecture
 
-### Add Your Own Content
-1. Edit `data/knowledge_base.md` with your content
-2. Delete `chroma_db/` directory
-3. Run `uv run python main.py` (auto re-indexes)
+### Agent Tools
 
-### Adjust Settings
+The RAG agent has access to four tools:
 
-| What to Change | File | Line | Example |
-|---------------|------|------|---------|
-| Retrieved docs (top-k) | `src/agent.py` | 40 | `top_k=3` → `top_k=5` |
-| Chunk size | `src/indexer.py` | 13 | `chunk_size=500` |
-| LLM model | `src/agent.py` | 35 | Try `claude-3.5-haiku` for lower cost |
-| Embedding model | `src/embeddings.py` | 11 | Try `all-mpnet-base-v2` |
+1. **retrieve_context** - Search the knowledge base using vector similarity
+2. **save_memory** - Store conversation summaries, preferences, or facts
+3. **recall_memory** - Retrieve relevant past conversations/preferences
+4. **summarize** - Summarize long text or multiple retrieved chunks
+
+### Memory System
+
+SQLite-backed storage with three memory types:
+- `conversation` - Summaries of past conversations
+- `preference` - User preferences and settings
+- `fact` - Important facts to remember
+
+### PII Guardrails
+
+Automatic detection and redaction before storing:
+- Email addresses → `[EMAIL]`
+- Phone numbers → `[PHONE]`
+- Social Security Numbers → `[SSN]`
+- Credit card numbers → `[CARD]`
+
+### Observability
+
+- **Tracing**: OpenTelemetry spans for all operations
+- **Logging**: Structured JSON logs to `logs/app.log`
+- **Metrics**: Query latency, retrieval scores, memory operations
 
 ---
 
-## Setting up 
+## Data Ingestion
+
+The system supports ingesting from the `data/` directory:
+- Markdown files (`.md`)
+- Text files (`.txt`)
+- Meeting transcripts (in `data/transcripts/`)
+
+To add new content:
+1. Add files to `data/` directory
+2. Run `uv run python main.py --ingest`
+
+---
+
+## Evaluation
+
+The evaluation suite tests:
+- **Retrieval**: Can the agent find relevant information?
+- **Synthesis**: Can it combine multiple sources?
+- **Memory**: Does memory improve responses?
+- **Edge cases**: How does it handle unknown topics?
+
+Run evaluations:
+```bash
+uv run python main.py --eval
+# Or directly:
+uv run python -m src.evals
+```
+
+Results are saved to `results/eval_results.json`.
+
+---
+
+## Configuration
+
+### Environment Variables
 
 ```bash
-# Install uv
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Install deps & run
-uv sync
-uv run python main.py
+ANTHROPIC_API_KEY=your_api_key_here
 ```
 
+### Customization
+
+| Setting | File | Description |
+|---------|------|-------------|
+| Top-k results | `src/agent.py:66` | Number of documents to retrieve |
+| Chunk size | `src/indexer.py:20` | Text chunk size for indexing |
+| LLM model | `src/agent.py:254` | Change to different Claude model |
+| Embedding model | `src/embeddings.py:11` | Sentence transformer model |
+
+---
+
+## Dependencies
+
+Core:
+- `pydantic-ai` - Agent framework
+- `chromadb` - Vector database
+- `sentence-transformers` - Embeddings
+- `anthropic` - Claude API
+
+New additions:
+- `aiosqlite` - Async SQLite for memory
+- `loguru` - Structured logging
+- `opentelemetry-api/sdk` - Tracing
+
+---
+
+## Development
+
+```bash
+# Install with dev dependencies
+uv sync --all-extras
+
+# Run tests
+uv run pytest
+
+# Format code
+uv run ruff format .
+
+# Lint
+uv run ruff check .
+```
+
+---
+
+## License
+
+MIT
