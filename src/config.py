@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     retrieval_top_k: int = 3
     use_memory: bool = True
 
+    # Notion
+    notion_api_token: str = ""
+
     # Observability
     service_name: str = "second-brain"
     log_file: str = "logs/app.log"

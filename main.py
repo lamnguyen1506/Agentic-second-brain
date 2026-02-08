@@ -8,6 +8,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from pydantic_ai.mcp import MCPServerStdio
+
 from src.agent import RAGAgent
 from src.memory import MemoryStore
 from src.observability import log, setup_logging
@@ -228,10 +230,15 @@ Examples:
         use_memory=not args.no_memory,
     )
 
+    notion_server = MCPServerStdio(
+        "uv", args=["run", "python", "src/mcp_notion.py"],
+    )
+
     rag_agent = RAGAgent(
         retriever=retriever,
         memory_store=memory_store,
         use_memory=not args.no_memory,
+        mcp_servers=[notion_server],
     )
 
     asyncio.run(interactive_mode(rag_agent))

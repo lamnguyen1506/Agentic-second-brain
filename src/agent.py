@@ -1,4 +1,4 @@
-"""RAG Agent with memory capabilities."""
+"""RAG Agent with memory and MCP tool capabilities."""
 
 from dataclasses import dataclass
 
@@ -10,17 +10,18 @@ from src.models import AgentResponse, SourceSnippet
 from src.observability import log
 
 
-SYSTEM_PROMPT = """You are a knowledgeable assistant that helps users find information from their personal knowledge base. You have access to both a vector-based knowledge retrieval system and a persistent memory system.
+SYSTEM_PROMPT = """You are a knowledgeable assistant that helps users find information from their personal knowledge base. You have access to a vector-based knowledge retrieval system, a persistent memory system, and Notion workspace tools.
 
 Your responsibilities:
 1. Use the retrieve_context tool to search for relevant information before answering questions
 2. Use recall_memory to check for relevant past conversations or user preferences
 3. Use save_memory to store important facts, user preferences, or conversation summaries
 4. Use summarize when dealing with long text or multiple retrieved chunks
-5. Base your answers primarily on the retrieved context and relevant memories
-6. Cite your sources by referencing the information from the context
-7. If the context doesn't contain enough information to answer confidently, acknowledge this
-8. Be concise but thorough in your responses
+5. Use Notion tools (search_pages, get_page_content, create_page, archive_page) when the user asks about their Notion workspace
+6. Base your answers primarily on the retrieved context and relevant memories
+7. Cite your sources by referencing the information from the context
+8. If the context doesn't contain enough information to answer confidently, acknowledge this
+9. Be concise but thorough in your responses
 
 When providing answers:
 - Set confidence to "high" if the context strongly supports your answer
@@ -33,7 +34,13 @@ Always include the source snippets you used in your response.
 Memory Guidelines:
 - Save user preferences when they express them (e.g., "I prefer concise answers")
 - Save important facts that might be useful later
-- Recall memories when the user asks about previous conversations or their preferences"""
+- Recall memories when the user asks about previous conversations or their preferences
+
+Notion Guidelines:
+- Use search_pages to find pages by keyword
+- Use get_page_content to read a specific page
+- Use create_page to create new pages (requires a parent page ID)
+- Use archive_page to soft-delete a page"""
 
 
 @dataclass
@@ -169,7 +176,7 @@ async def summarize(ctx: RunContext[AgentDeps], text: str, max_sentences: int = 
 
 
 class RAGAgent:
-    """RAG Agent with memory capabilities."""
+    """RAG Agent with memory and MCP tool capabilities."""
 
     def __init__(
         self,
@@ -177,12 +184,14 @@ class RAGAgent:
         memory_store=None,
         model: str | None = None,
         use_memory: bool = True,
+        mcp_servers: list | None = None,
     ):
         settings = get_settings()
         self.retriever = retriever
         self.memory_store = memory_store
         self.model = model or settings.llm_model
         self.use_memory = use_memory
+        self.mcp_servers = mcp_servers or []
         self._agent: Agent[AgentDeps, AgentResponse] | None = None
 
     def _get_agent(self) -> Agent[AgentDeps, AgentResponse]:
@@ -193,6 +202,7 @@ class RAGAgent:
                 deps_type=AgentDeps,
                 output_type=AgentResponse,
                 system_prompt=SYSTEM_PROMPT,
+                toolsets=self.mcp_servers,
             )
             agent.tool(retrieve_context)
             agent.tool(save_memory)
@@ -211,7 +221,9 @@ class RAGAgent:
         )
 
         agent = self._get_agent()
-        result = await agent.run(question, deps=deps)
+        async with agent:
+            result = await agent.run(question, deps=deps)
+
         output = result.output
 
         if not output.sources and self.retriever:
