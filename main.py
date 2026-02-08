@@ -232,6 +232,7 @@ Examples:
 
     notion_server = MCPServerStdio(
         "uv", args=["run", "python", "src/mcp_notion.py"],
+        env={**os.environ},
     )
 
     rag_agent = RAGAgent(

@@ -193,6 +193,7 @@ class RAGAgent:
         self.use_memory = use_memory
         self.mcp_servers = mcp_servers or []
         self._agent: Agent[AgentDeps, AgentResponse] | None = None
+        self._message_history: list = []
 
     def _get_agent(self) -> Agent[AgentDeps, AgentResponse]:
         """Get or create the Pydantic AI agent."""
@@ -212,6 +213,31 @@ class RAGAgent:
 
         return self._agent
 
+    def _load_memory_context(self) -> str:
+        """Load recent memories as context for the first turn of a session."""
+        if not self.memory_store or not self.use_memory:
+            return ""
+
+        memories = self.memory_store.get_recent_memories(limit=5)
+        if not memories:
+            return ""
+
+        lines = []
+        for mem in memories:
+            lines.append(f"[{mem.type.upper()}] {mem.content}")
+        return "Relevant memories from past sessions:\n" + "\n".join(lines)
+
+    def _auto_save(self, question: str, answer: str) -> None:
+        """Save a brief Q&A summary to memory after each exchange."""
+        if not self.memory_store or not self.use_memory:
+            return
+
+        summary = f"Q: {question}\nA: {answer[:300]}"
+        self.memory_store.save_memory(
+            content=redact_pii(summary),
+            memory_type="conversation",
+        )
+
     async def ask(self, question: str) -> AgentResponse:
         """Ask the agent a question."""
         deps = AgentDeps(
@@ -220,9 +246,23 @@ class RAGAgent:
             use_memory=self.use_memory,
         )
 
+        # On first turn, prepend stored memories so the agent has cross-session context
+        prompt = question
+        if not self._message_history:
+            memory_ctx = self._load_memory_context()
+            if memory_ctx:
+                prompt = f"{memory_ctx}\n\n---\nUser question: {question}"
+
         agent = self._get_agent()
         async with agent:
-            result = await agent.run(question, deps=deps)
+            result = await agent.run(
+                prompt,
+                deps=deps,
+                message_history=self._message_history,
+            )
+
+        # Persist full conversation for within-session continuity
+        self._message_history = result.all_messages()
 
         output = result.output
 
@@ -242,7 +282,15 @@ class RAGAgent:
             confidence=output.confidence,
             source_count=len(output.sources),
         )
+
+        # Auto-save exchange to persistent memory for future sessions
+        self._auto_save(question, output.answer)
+
         return output
+
+    def clear_history(self) -> None:
+        """Reset within-session conversation history."""
+        self._message_history = []
 
     async def ask_without_memory(self, question: str) -> AgentResponse:
         """Ask the agent a question without using memory."""

@@ -15,6 +15,11 @@ BASE_URL = "https://api.notion.com/v1"
 
 def _headers() -> dict[str, str]:
     token = os.environ.get("NOTION_API_TOKEN", "")
+    if not token:
+        raise RuntimeError(
+            "NOTION_API_TOKEN environment variable is not set. "
+            "Add it to your .env file."
+        )
     return {
         "Authorization": f"Bearer {token}",
         "Notion-Version": NOTION_VERSION,

@@ -1,6 +1,7 @@
 """Streamlit chat UI for the Second Brain RAG system."""
 
 import asyncio
+import os
 from pathlib import Path
 
 import streamlit as st
@@ -38,6 +39,7 @@ def init_system():
 
     notion_server = MCPServerStdio(
         "uv", args=["run", "python", "src/mcp_notion.py"],
+        env={**os.environ},
     )
 
     agent = RAGAgent(
