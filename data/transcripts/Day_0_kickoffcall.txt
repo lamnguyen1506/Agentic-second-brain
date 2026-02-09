@@ -1,0 +1,173 @@
+My Nguyen
+My Nguyen
+00:08
+Okay
+Hello everyone, and welcome to the AI Engineering Upskilling program. It's, nice to meet all of you here. I am My.
+I'm based in Vietnam, I'm from L&D team. And coming along with me, we have, Sneha from the IME L&D team, who has
+experience from curating this training and running it over several cohorts. And, before we dive in,
+I would like to introduce our trainers for the cohort, that we are lucky to have the experienced data scientists.
+with hands-on knowledge in data, AI, machine learning, and applied engineering. They are TENG, NED, and GITANSH.
+And, our trainers will guide you through, demo, Q&A, discussion, project review, and…
+Support you with some technical issues if you have.
+And, yep, I encourage you to make the most of the activities throughout the learning time.
+And,
+Yeah, and so we have a really… we are really excited to have all of you here, and this cohort will run from February the 2nd to February 9th. We have…
+A great group joining us with 20 participants in total, and this version of the program is
+Designed especially for people who are currently on the beach. So, the expectation is that you will spend around 5 to 6 hours a day.
+On, self-paced learning, plus an hour.
+Almost an hour every day to join live sessions with trainers, and we don't have staffed Thoughtworkers now.
+We will have checked with Staffing that you can join the training, but…
+In case you are staffed.
+Please let me know your availability, and if you want to keep joining, we will support you so you can make the most of this training experience.
+And, as we have a group of participants from different countries, like Australia, Singapore, China, and Vietnam, the local time zone vary, so…
+To choose a suitable for all is hard.
+So, hope you understand, when the live sessions are being at lunchtime in your diary.
+And yeah, sharing a little bit about the training. We had a pilot version in APAC back last December, and now some details were updated based on the feedback we received from all previous cohorts in all regions.
+That means…
+this is the first time we are running this revision in APAC. So some of you may have, received information or nominated on a short notice.
+It may feel a bit rush on your side, as well as on ours, but thank you so much for arranging your schedule and making the time to join, and we really appreciated your, flexibility and commitment.
+So, for this program… I'm sorry.
+For this program, we have some key objectives that, for ThoughtWorker, we're aiming to provide a learning journey for developers, machine learning engineers, data scientists, data engineer, and enable you to grow towards as an AI engineering archetype.
+And it also helped a staffing team to fill the open role that required the AI engineering competencies.
+And for Thoughtworks as an enterprise, we addressed an increasing demand in AI engineering competency.
+Okay, about the programme…
+Let's say one of the key objectives for…
+this training is to, support you as a machine learning, data scientist, data engineer, and developer to picking up… in picking up, competencies that will help you grow toward the AI engineering archetype.
+And, this archetype is defined by close to 20 competencies, and in this program, we have picked out 3 or 4 core competencies that
+you must possess when building AI products.
+So, we will be looking at the core Gen AI concepts, including, LLM, Agents, Evals, Guardrails, RAG, memory, MCP,
+And, this is a 6-day and semi-guided program, so much of the content and hands-on work comes from a platform like, OReilly, Udemy, and YouTube.
+But almost every day will be a live session with trainers for demo, Q&A, and code review.
+And, about the learning journey.
+that the first prerequisite for this training is the Python for the AI module. Python readiness will be validated through the Python verifiable skill module, and
+This module is designed to quickly bring you up to speed with the core Python skills essential for the AI engineering program, and then we'll go through the detail in later slide.
+Mmm…
+While we know that everyone has basic or intermediate Python experience, we are curated specific detail around pedantic and patented AI, so even if you are proficient
+in Python, if you are unfamiliar with these super specific terms, I will strongly recommend you to spend some time in preparing, and you have until day 1 next week to finish this one.
+And, this is also the Staffing Ready program, meaning every participant
+will receive a staffing readiness feedback from trainers, and your performance will be shared with staffing team and your CLTs, as well as data and AI service lines key stakeholder, to match you with new AI roles.
+And, the final assessment will base on, overall engagement and attendance in the live section, completion of the assignments, and the quality of capstone project. We'll repeat it in a later slide also.
+And, with extended learning, we provide some curated training material, as well as cloud-based, AI certification, like DataBrick, AWS, for example.
+So, for the participant profile.
+Yeah, as you are here, participants are developer, data scientists, data engineers, machine learning engineer at the consultant, senior, lead level, and have practitioner level experience of, Python.
+Okay, about the detailed content and format.
+As I mentioned, there's a content we cover in this training. We have foundation, agent basics, MCP, RAG and memory, additional concept, and final capstone project. And if you look at the next slide.
+You will have an overview on specific content that we will go through each module.
+Yeah, I think you can have a look at it, or you already had a look at it.
+After this training. After this kickoff, sorry. So, about the curriculum…
+Like, yeah, a quick overview on the curriculum, that we have total 3 assignments and 1 capstone project to be submitted.
+And we will have 5 live sessions on day 1, 2, 3, 5, and 6, and day 4 is for self-paced learning only.
+And before the training, there're…
+require actions to complete, that you need to complete the self-paced assessment on Pathway.
+But, for your information, we will move away from Pathways and start using a new tool, so…
+for this part, I believe you will receive an email on this transition tool soon, and they will then update the instruction on how you can assess your capability
+Later this week, and I will keep you informed on this.
+And then you will need to complete the technical prerequisites. There are several things on the prerequisites, so we'll talk about them later on also, after we go through the curriculum.
+Then watch some self-paced material, and join the kickoff with our participant and L&D team, which is what we are doing now.
+And for day one, the focus is on the AI Agent introduction and prompting and evals
+then you will join the live session with trainers. You will need to complete and submit the assignment one on building agents using Pydantic AI before day two of live sessions.
+Am I too fast, everyone?
+Yeah, let's… yep, continue.
+So, for Day 2, we will focus on the RAG and memory. We will also review the first, assignment in the live session with trainers.
+Yeah, and that's it. And for Day 3,
+For day 3, in the first half of the day, you will need to complete and submit the assignment 2 on RAG before the live session with trainers, and then watch some self-paced materials and videos.
+And in the second half of the day, you will focus on the MCP self-paced material, then trainer will demo building an MCP server.
+From day 4, they… on day 4, there's no live session with trainers, and you have to complete on your own pace.
+around the MCP course, and submit the submission, ah the assignment 3 on creating the MCP server by the end of day 4.
+And, let's say, sharing a bit on the experience from the previous cohorts.
+You shouldn't wait until the next live session, because you have to get an idea on the capstone project...
+to join the live session with trainers on day 5, so if you cannot complete the assignment 3 on day 4, it's kind of hard for you to get up to speed with the
+final project.
+And, yep, then you will watch the recording on security and review slide deck.
+And after that, you will start working on the capstone project.
+Yeah, and from day 5 and day 6 are mainly on the capstone project works on your own.
+On Day 5, there is… A one-hour live session to address any blockers or questions you have.
+So, please be prepared and take advantage of this live session.
+And, Day 6, the capstone completion and, showcase.
+This is for those who want to present the solution.
+And after the training, you will complete your self-assessment
+On Pathways, yeah, I will also update it so.
+And, you will complete the feedback survey. This is one of…
+The important part as it lets us know about your own assessment regarding staffing confidence after the training, so we hope you can complete it after the training.
+Any question up to now, everyone?
+Feel free to stop me if I…
+Soumya Routa
+Soumya Routa
+14:40
+It's in the chat.
+My Nguyen
+My Nguyen
+14:41
+Absolutely.
+Let me take… We'll get a cloud resources to
+deploy… yeah, you will have… we will have the access to, the…
+Gemini and Claude model, and I will talk about it later in the prerequisites.
+How do you submit the technical prerequisites? Up to now, it's on your own pace, so you can complete it...
+We trust all of our participants, so please complete it as it prepares you with the knowledge as well as the
+Some hands-on experience before you actually come into the assignments, as well as the final capstone project.
+Okay.
+Thank you Sneha.
+She's already answered some of the questions.
+So, for the capstone project…
+Sorry?
+Okay, for the capstone, by the end of day 4 and the whole day 5 and 6 of the program, you individually work on your final capstone project.
+So, for the final submission, you will need to record a 5-minute video presenting your solution, and share your repo with the trainer's GitHub usernames. I will keep you posted on this when the time comes.
+And, if you volunteer to showcase your project live on day 6, you don't need to record the video.
+Yep.
+Further Learning.
+Yeah, we have compiled a few additional topics for you to explore after the training, as well as certification that you can take.
+So, you can have a look at after this kickoff, and let me know if you have any questions or ask at the end of this call if you already had in mind.
+Okay, technical setup.
+So, the required actions to complete before the training, including, complete the required components of the Python verifiable skill module.
+For this one, you are required to complete the mandatory, Oreilly Python skill assessment, and the assessment then generates a personal skill plan, cover several competencies across five levels.
+Which provide you with a clear guidance on current proficiency and recommend focus area for you.
+So, what you need to do next is to complete the competencies on level 1, 2, 3, and, competencies 4.1 in Level 4.
+The estimated completion time is around 2 days, but it can be faster if your personal skill plan already covers in the competency from level 1 to 4.
+And then you will get a practitioner-level experience with Python, familiarize yourself with Pydantic AI, then gain access to the repo for the AI Agent Katas and the Oreilly Learning Platform.
+And you need to generate your, API keys for Gemini model and, Claude model.
+There are instructions on how to get access to this.
+I think in some latest life.
+Oh, sorry.
+Yep, this one. So, please follow this steps...
+Ideally right after this kickoff, as it usually takes you a day to receive your key.
+And,
+There are some notes for you that these keys are confidential for personal use and should never be shared with anyone else or pushed in public repos or posted on forums.
+And, access to the Claude may be limited to some region, for example, in China, due to network or verification constraints, so you may use,
+Gemini, or reach out to L&D team for support.
+And, yeah, there's also an instruction on how to set up an OLLAMA as an additional option for you.
+Yeah.
+And, yeah, OLLAMA allows you to run large language modules locally in your machine without relying on hosting APIs, so you can experience Bluetooth prompt on workflow without the API limits and concerns.
+So, participant expectation.
+That we expect you to attend all live sessions, except for some reason that,
+if you cannot attend any live session, please let me know beforehand. And please complete the self-paced learning material, complete all of the hands-on...
+assignments and final capstone project, then fill out a feedback survey after the training, and as well as update your profile before and after training.
+Yeah, these are time codes that you can use while attending this training.
+I think that's pretty much about our kickoff and all what I want to share.
+So, it's time for Q&A. If anyone has any questions, please…
+speak up or leave it in the chat space
+We can use this timecode...? Yeah, you can use this for the whole day.
+Boyu Li
+Boyu Li
+21:59
+Can I use this timecode from this week?
+My Nguyen
+My Nguyen
+22:04
+Oh… I believe so, you can use it.
+Boyu Li
+Boyu Li
+22:08
+Okay, thank you.
+My Nguyen
+My Nguyen
+22:30
+Any other question, everyone?
+Okay… example, I need some more example of a 5-minute video.
+Let's say we have…
+Yeah, we can share, we can share with you a 5-minute video from the previous cohort as an example.
+Please share the timecode again. It's included in the handbook, please, and we'll share that in the chat space around it.
+Yeah, so if no more questions, we can wrap up now and raise any questions in the chat space if you have, any time, we can try to support you, as soon as possible. And, yeah, all the best, have fun learning!
+Hope, this will be a valuable and inspiring experience for you. And thank you for joining, and have a good rest of the day.
+Boyu Li
+Boyu Li
+Thank you.

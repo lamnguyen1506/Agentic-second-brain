@@ -38,3 +38,15 @@ htmlcov/
 # Model cache
 .cache/
 models/
+
+# SQLite database
+data/memory.db
+
+# Logs (keep directory, ignore contents)
+logs/*.log
+logs/*.json
+
+# Evaluation results (keep directory, ignore contents)
+results/*.json
+!results/.gitkeep
+!logs/.gitkeep

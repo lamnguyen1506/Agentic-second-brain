@@ -1,27 +1,27 @@
-"""Pydantic AI agent with RAG capabilities."""
+"""RAG Agent with memory and MCP tool capabilities."""
 
-from typing import Optional
-from pydantic_ai import Agent, RunContext
-from src.models import AgentResponse, SourceSnippet
-from src.retrieval_tool import RetrievalTool
 from dataclasses import dataclass
 
+from pydantic_ai import Agent, RunContext
 
-@dataclass
-class AgentDeps:
-    """Dependencies for the RAG agent."""
-    retrieval_tool: RetrievalTool
+from src.config import get_settings
+from src.guardrails import redact_pii
+from src.models import AgentResponse, SourceSnippet
+from src.observability import log
 
 
-# System prompt for the RAG agent
-SYSTEM_PROMPT = """You are a knowledgeable assistant that helps users find information from their personal knowledge base.
+SYSTEM_PROMPT = """You are a knowledgeable assistant that helps users find information from their personal knowledge base. You have access to a vector-based knowledge retrieval system, a persistent memory system, and Notion workspace tools.
 
 Your responsibilities:
 1. Use the retrieve_context tool to search for relevant information before answering questions
-2. Base your answers primarily on the retrieved context
-3. Cite your sources by referencing the information from the context
-4. If the context doesn't contain enough information to answer confidently, acknowledge this
-5. Be concise but thorough in your responses
+2. Use recall_memory to check for relevant past conversations or user preferences
+3. Use save_memory to store important facts, user preferences, or conversation summaries
+4. Use summarize when dealing with long text or multiple retrieved chunks
+5. Use Notion tools (search_pages, get_page_content, create_page, archive_page) when the user asks about their Notion workspace
+6. Base your answers primarily on the retrieved context and relevant memories
+7. Cite your sources by referencing the information from the context
+8. If the context doesn't contain enough information to answer confidently, acknowledge this
+9. Be concise but thorough in your responses
 
 When providing answers:
 - Set confidence to "high" if the context strongly supports your answer
@@ -29,7 +29,28 @@ When providing answers:
 - Set confidence to "low" if you're uncertain or extrapolating beyond the context
 - Set confidence to "none" if no relevant context was found
 
-Always include the source snippets you used in your response."""
+Always include the source snippets you used in your response.
+
+Memory Guidelines:
+- Save user preferences when they express them (e.g., "I prefer concise answers")
+- Save important facts that might be useful later
+- Recall memories when the user asks about previous conversations or their preferences
+
+Notion Guidelines:
+- Use search_pages to find pages by keyword
+- Use get_page_content to read a specific page
+- Use create_page to create new pages (requires a parent page ID)
+- Use archive_page to soft-delete a page"""
+
+
+@dataclass
+class AgentDeps:
+    """Dependencies for the RAG agent."""
+
+    retriever: "Retriever"  # type: ignore
+    memory_store: "MemoryStore | None" = None  # type: ignore
+    use_memory: bool = True
+
 
 async def retrieve_context(ctx: RunContext[AgentDeps], query: str) -> str:
     """Search the knowledge base for relevant information.
@@ -41,75 +62,251 @@ async def retrieve_context(ctx: RunContext[AgentDeps], query: str) -> str:
     Returns:
         Formatted context string with relevant information
     """
-    # Retrieve relevant documents
-    results = ctx.deps.retrieval_tool.retrieve(query, top_k=3)
-
-    # Format the context
-    context = ctx.deps.retrieval_tool.format_context(results)
-
+    results = ctx.deps.retriever.retrieve(query, top_k=3)
+    context = ctx.deps.retriever.format_context(results)
+    log.info(f"Retrieved {len(results)} documents for query", query=query[:50])
     return context
 
 
-async def validate_response(ctx: RunContext[AgentDeps], result: AgentResponse) -> AgentResponse:
-    """Validate and enrich the agent's response with source information.
+async def save_memory(
+    ctx: RunContext[AgentDeps],
+    content: str,
+    memory_type: str = "conversation",
+    metadata: dict | None = None,
+) -> str:
+    """Store a memory entry (conversation summary, user preference, or fact).
 
     Args:
-        ctx: The run context
-        result: The agent's response
+        ctx: The run context containing dependencies
+        content: The content to store (will be automatically PII-redacted)
+        memory_type: Type of memory: "conversation", "preference", or "fact"
+        metadata: Optional additional metadata
 
     Returns:
-        Validated and enriched response
+        Confirmation message with memory ID
     """
-    # If sources are empty, try to populate them from the last retrieval
-    # This is a fallback in case the agent didn't populate sources properly
-    if not result.sources:
-        # We could retrieve again here, but for now just ensure the structure is correct
-        pass
+    if not ctx.deps.memory_store or not ctx.deps.use_memory:
+        return "Memory system is not enabled."
 
-    return result
+    redacted_content = redact_pii(content)
+    entry = ctx.deps.memory_store.save_memory(
+        content=redacted_content,
+        memory_type=memory_type,
+        metadata=metadata or {},
+    )
+    log.info(f"Saved memory: {entry.id}", memory_id=entry.id, memory_type=memory_type)
+    return f"Memory saved successfully with ID: {entry.id}"
+
+
+async def recall_memory(
+    ctx: RunContext[AgentDeps],
+    query: str | None = None,
+    memory_type: str | None = None,
+    limit: int = 5,
+) -> str:
+    """Retrieve relevant past conversations or preferences from memory.
+
+    Args:
+        ctx: The run context containing dependencies
+        query: Optional search query to filter memories
+        memory_type: Optional filter by type: "conversation", "preference", or "fact"
+        limit: Maximum number of memories to return
+
+    Returns:
+        Formatted string of relevant memories
+    """
+    if not ctx.deps.memory_store or not ctx.deps.use_memory:
+        return "Memory system is not enabled."
+
+    if query:
+        memories = ctx.deps.memory_store.search_memory(
+            query=query, memory_type=memory_type, limit=limit,
+        )
+    else:
+        memories = ctx.deps.memory_store.get_recent_memories(
+            limit=limit, memory_type=memory_type,
+        )
+
+    if not memories:
+        log.info("No memories found", query=query, memory_type=memory_type)
+        return "No relevant memories found."
+
+    formatted = []
+    for mem in memories:
+        formatted.append(
+            f"[{mem.type.upper()}] ({mem.timestamp.strftime('%Y-%m-%d %H:%M')})\n{mem.content}"
+        )
+
+    log.info(f"Recalled {len(memories)} memories", count=len(memories), query=query)
+    return "\n\n---\n\n".join(formatted)
+
+
+async def summarize(ctx: RunContext[AgentDeps], text: str, max_sentences: int = 3) -> str:
+    """Summarize long text or multiple retrieved chunks.
+
+    Args:
+        ctx: The run context containing dependencies
+        text: The text to summarize
+        max_sentences: Target number of sentences for the summary
+
+    Returns:
+        A concise summary of the input text
+    """
+    sentences = text.replace("\n", " ").split(". ")
+    sentences = [s.strip() for s in sentences if s.strip()]
+
+    if len(sentences) <= max_sentences:
+        return text
+
+    summary_parts = []
+    if sentences:
+        summary_parts.append(sentences[0])
+    if len(sentences) > 2 and max_sentences > 2:
+        mid = len(sentences) // 2
+        summary_parts.append(sentences[mid])
+    if len(sentences) > 1:
+        summary_parts.append(sentences[-1])
+
+    summary = ". ".join(summary_parts)
+    if not summary.endswith("."):
+        summary += "."
+
+    log.info(f"Summarized text from {len(text)} chars to {len(summary)} chars")
+    return summary
 
 
 class RAGAgent:
-    def __init__(self, retrieval_tool: RetrievalTool, model: str = 'anthropic:claude-sonnet-4-5'):
-        self.retrieval_tool = retrieval_tool
-        self.model = model
-        self._agent: Optional[Agent[AgentDeps, AgentResponse]] = None
+    """RAG Agent with memory and MCP tool capabilities."""
+
+    def __init__(
+        self,
+        retriever=None,
+        memory_store=None,
+        model: str | None = None,
+        use_memory: bool = True,
+        mcp_servers: list | None = None,
+    ):
+        settings = get_settings()
+        self.retriever = retriever
+        self.memory_store = memory_store
+        self.model = model or settings.llm_model
+        self.use_memory = use_memory
+        self.mcp_servers = mcp_servers or []
+        self._agent: Agent[AgentDeps, AgentResponse] | None = None
+        self._message_history: list = []
 
     def _get_agent(self) -> Agent[AgentDeps, AgentResponse]:
+        """Get or create the Pydantic AI agent."""
         if self._agent is None:
             agent = Agent(
                 self.model,
                 deps_type=AgentDeps,
                 output_type=AgentResponse,
                 system_prompt=SYSTEM_PROMPT,
+                toolsets=self.mcp_servers,
             )
-
             agent.tool(retrieve_context)
-            agent.output_validator(validate_response)
-
+            agent.tool(save_memory)
+            agent.tool(recall_memory)
+            agent.tool(summarize)
             self._agent = agent
 
         return self._agent
 
-    async def ask(self, question: str) -> AgentResponse:
-        deps = AgentDeps(retrieval_tool=self.retrieval_tool)
+    def _load_memory_context(self) -> str:
+        """Load recent memories as context for the first turn of a session."""
+        if not self.memory_store or not self.use_memory:
+            return ""
 
-        # Run the agent
+        memories = self.memory_store.get_recent_memories(limit=5)
+        if not memories:
+            return ""
+
+        lines = []
+        for mem in memories:
+            lines.append(f"[{mem.type.upper()}] {mem.content}")
+        return "Relevant memories from past sessions:\n" + "\n".join(lines)
+
+    def _auto_save(self, question: str, answer: str) -> None:
+        """Save a brief Q&A summary to memory after each exchange."""
+        if not self.memory_store or not self.use_memory:
+            return
+
+        summary = f"Q: {question}\nA: {answer[:300]}"
+        self.memory_store.save_memory(
+            content=redact_pii(summary),
+            memory_type="conversation",
+        )
+
+    async def ask(self, question: str) -> AgentResponse:
+        """Ask the agent a question."""
+        deps = AgentDeps(
+            retriever=self.retriever,
+            memory_store=self.memory_store,
+            use_memory=self.use_memory,
+        )
+
+        # On first turn, prepend stored memories so the agent has cross-session context
+        prompt = question
+        if not self._message_history:
+            memory_ctx = self._load_memory_context()
+            if memory_ctx:
+                prompt = f"{memory_ctx}\n\n---\nUser question: {question}"
+
         agent = self._get_agent()
-        result = await agent.run(question, deps=deps)
+        async with agent:
+            result = await agent.run(
+                prompt,
+                deps=deps,
+                message_history=self._message_history,
+            )
+
+        # Persist full conversation for within-session continuity
+        self._message_history = result.all_messages()
 
         output = result.output
 
-        # Ensure sources are populated
-        if not output.sources:
-            retrieved_docs = self.retrieval_tool.retrieve(question, top_k=3)
+        if not output.sources and self.retriever:
+            retrieved_docs = self.retriever.retrieve(question, top_k=3)
             output.sources = [
                 SourceSnippet(
-                    text=doc['text'],
-                    relevance_score=doc['similarity_score'],
-                    metadata=doc['metadata']
+                    text=doc["text"],
+                    relevance_score=doc["similarity_score"],
+                    metadata=doc["metadata"],
                 )
                 for doc in retrieved_docs
             ]
 
+        log.info(
+            "Agent response generated",
+            confidence=output.confidence,
+            source_count=len(output.sources),
+        )
+
+        # Auto-save exchange to persistent memory for future sessions
+        self._auto_save(question, output.answer)
+
         return output
+
+    def clear_history(self) -> None:
+        """Reset within-session conversation history."""
+        self._message_history = []
+
+    async def ask_without_memory(self, question: str) -> AgentResponse:
+        """Ask the agent a question without using memory."""
+        original_use_memory = self.use_memory
+        self.use_memory = False
+        try:
+            return await self.ask(question)
+        finally:
+            self.use_memory = original_use_memory
+
+    async def ask_without_rag(self, question: str) -> AgentResponse:
+        """Ask the agent a question without RAG retrieval."""
+        agent = Agent(
+            self.model,
+            output_type=AgentResponse,
+            system_prompt="You are a helpful assistant. Answer questions based on your knowledge. Be honest if you don't know something.",
+        )
+        result = await agent.run(question)
+        return result.output

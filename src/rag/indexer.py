@@ -1,8 +1,10 @@
 """Knowledge base indexing utilities."""
 
 from pathlib import Path
-from src.embeddings import EmbeddingModel, TextChunker
-from src.vector_store import VectorStore
+
+from src.rag.chunking import TextChunker
+from src.rag.embeddings import EmbeddingModel
+from src.rag.vector_store import VectorStore
 
 
 class KnowledgeBaseIndexer:
@@ -17,7 +19,7 @@ class KnowledgeBaseIndexer:
         """
         self.embedding_model = embedding_model
         self.vector_store = vector_store
-        self.chunker = TextChunker(chunk_size=500, overlap=50)
+        self.chunker = TextChunker()
 
     def index_file(self, file_path: str) -> int:
         """Index a single file into the vector store.
@@ -36,18 +38,18 @@ class KnowledgeBaseIndexer:
         print(f"\nIndexing file: {file_path}")
 
         # Read and chunk the file
-        if file_path_obj.suffix == '.md':
+        if file_path_obj.suffix == ".md":
             chunks = self.chunker.chunk_markdown_file(file_path)
         else:
             # For other text files
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
             chunks = self.chunker.chunk_text(content)
             # Add basic metadata
             for chunk in chunks:
-                if 'metadata' not in chunk:
-                    chunk['metadata'] = {}
-                chunk['metadata']['file'] = file_path_obj.name
+                if "metadata" not in chunk:
+                    chunk["metadata"] = {}
+                chunk["metadata"]["file"] = file_path_obj.name
 
         if not chunks:
             print("No chunks created from file.")
@@ -57,25 +59,22 @@ class KnowledgeBaseIndexer:
 
         # Generate embeddings
         print("Generating embeddings...")
-        texts = [chunk['text'] for chunk in chunks]
+        texts = [chunk["text"] for chunk in chunks]
         embeddings = self.embedding_model.generate_embeddings(texts)
 
         # Prepare metadata and IDs
         metadatas = []
         ids = []
         for i, chunk in enumerate(chunks):
-            metadata = chunk.get('metadata', {})
-            metadata['chunk_id'] = chunk['chunk_id']
-            metadata['file'] = file_path_obj.name
+            metadata = chunk.get("metadata", {})
+            metadata["chunk_id"] = chunk["chunk_id"]
+            metadata["file"] = file_path_obj.name
             metadatas.append(metadata)
             ids.append(f"{file_path_obj.stem}_{i}")
 
         # Add to vector store
         self.vector_store.add_documents(
-            documents=texts,
-            embeddings=embeddings,
-            metadatas=metadatas,
-            ids=ids
+            documents=texts, embeddings=embeddings, metadatas=metadatas, ids=ids
         )
 
         print(f"Successfully indexed {len(chunks)} chunks!")
